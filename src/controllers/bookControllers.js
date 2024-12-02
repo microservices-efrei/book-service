@@ -1,6 +1,6 @@
-const express = require('express');
 const amqp = require('amqplib');
-const { Book } = require('../models/book'); // Assurez-vous d'avoir un modèle Book dans models/
+const Book = require('../models/book');
+const { sendJwtToken } = require('../middleware/jwt');
 
 const RABBITMQ_URI = 'amqp://micro-service:password@rabbitmq'; // URI de RabbitMQ
 const BORROWING_QUEUE = 'borrowing_queue'; // Queue pour envoyer les demandes de réservation
@@ -27,6 +27,7 @@ async function sendMessageToQueue(queue, message) {
 const createBook = async (req, res) => {
   try {
     const { title, author, description } = req.body;
+    const user = req.user; // L'utilisateur est extrait du token JWT
 
     // Validation des données
     if (!title || !author) {
@@ -37,6 +38,11 @@ const createBook = async (req, res) => {
 
     // Création du livre
     const book = await Book.create({ title, author, description });
+    if (!book) {
+      return res
+        .status(500)
+        .json({ message: "Erreur lors de l'ajout du livre." });
+    }
 
     res.status(201).json({
       message: 'Livre ajouté avec succès',
@@ -45,6 +51,7 @@ const createBook = async (req, res) => {
         title: book.title,
         author: book.author,
         description: book.description,
+        isAvailable: book.isAvailable,
       },
     });
   } catch (error) {
@@ -122,8 +129,11 @@ const deleteBook = async (req, res) => {
 // Route pour réserver un livre (envoie une demande à RabbitMQ)
 const borrowBook = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    const { bookId } = req.params;
     const userId = req.user.id; // L'ID de l'utilisateur est extrait du token JWT
+
+    console.log('userId', userId);
+    console.log('bookId', bookId);
 
     // Validation des données
     if (!userId || !bookId) {
@@ -155,6 +165,7 @@ const borrowBook = async (req, res) => {
     const borrowRequest = {
       userId,
       bookId,
+      token: sendJwtToken(res, req.user),
     };
 
     // Envoyer la demande de réservation à la queue RabbitMQ

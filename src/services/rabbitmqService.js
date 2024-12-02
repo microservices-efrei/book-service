@@ -1,42 +1,49 @@
+const axios = require('axios'); // Pour envoyer des requêtes HTTP
 const amqp = require('amqplib');
+const { createBorrowing } = require('../controllers/borrowingController'); // Importer la fonction de création d'emprunt
 
 const RABBITMQ_URI = 'amqp://micro-service:password@rabbitmq';
-// const USER_CHECK_QUEUE = 'user_check_queue';
-// const USER_RESPONSE_QUEUE = 'user_response_queue';
+let connection;
+let channel;
 
-// Fonction pour envoyer un message à RabbitMQ
-async function sendMessageToQueue(queue, message) {
-  const connection = await amqp.connect(RABBITMQ_URI);
-  const channel = await connection.createChannel();
-
-  await channel.assertQueue(queue, { durable: true });
-  channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
-    persistent: true,
-  });
-
-  console.log(`Message envoyé à la queue ${queue}:`, message);
-  await channel.close();
-  await connection.close();
+async function connectRabbitMQ() {
+  if (!connection) {
+    connection = await amqp.connect(RABBITMQ_URI);
+    channel = await connection.createChannel();
+    console.log('Connexion à RabbitMQ établie');
+  }
 }
 
-// Fonction pour écouter une queue et traiter les messages
-async function listenToQueue(queue, callback) {
-  const connection = await amqp.connect(RABBITMQ_URI);
-  const channel = await connection.createChannel();
+// Fonction pour consommer les messages RabbitMQ
+async function consumeMessagesFromQueue() {
+  try {
+    await connectRabbitMQ();
 
-  await channel.assertQueue(queue, { durable: true });
-  console.log(`En attente de messages dans la queue ${queue}...`);
+    const queue = 'borrowing_response_queue'; // Nom de la queue où le message est envoyé par book-service
+    await channel.assertQueue(queue, { durable: true });
 
-  channel.consume(queue, (msg) => {
-    if (msg !== null) {
-      const message = JSON.parse(msg.content.toString());
-      callback(message);
-      channel.ack(msg);
-    }
-  });
+    console.log('En attente de messages dans la queue', queue);
+
+    channel.consume(queue, async (msg) => {
+      if (msg !== null) {
+        const { userId, bookId } = JSON.parse(msg.content.toString());
+
+        console.log(
+          `Message reçu de la queue ${queue}:`,
+          JSON.parse(msg.content.toString())
+        );
+
+        // Acquitter le message après traitement
+        channel.ack(msg);
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la consommation des messages:', error);
+  }
 }
 
-module.exports = {
-  sendMessageToQueue,
-  listenToQueue,
-};
+async function startListening() {
+  await consumeMessagesFromQueue();
+}
+
+module.exports = { consumeMessagesFromQueue, startListening };

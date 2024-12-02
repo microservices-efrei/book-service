@@ -2,6 +2,8 @@ const express = require('express');
 const sequelize = require('./src/config/database');
 const dotenv = require('dotenv');
 const indexRoutes = require('./src/routes/index');
+const rabbitMQService = require('./src/services/rabbitmqService');
+const cors = require('cors');
 
 dotenv.config();
 
@@ -22,9 +24,12 @@ sequelize
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 
+app.use(cors());
+
 app.use(express.json());
 app.use('/api', indexRoutes);
 
+rabbitMQService.startListening();
 app.listen(PORT, () => {
   console.log(`User Service running on port ${PORT}`);
 });

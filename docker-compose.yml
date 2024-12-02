@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Service Node.js
+  app:
+    container_name: book-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3003:3003'
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=database-postgres # Nom du service PostgreSQL dans le compose central
+      - DB_USER=root
+      - DB_PASSWORD=password
+      - DB_NAME=book_db
+      - JWT_SECRET="syDqft24Tcc35Y1gepDphX69HwdJicfYQzVzvE3Oi2aYicLDmQE5XGvIqTD57Pac"
+    volumes:
+      - ./src:/usr/src/app/src
+    command: >
+      sh -c "npm install && node src/scripts/sync.js && npm run dev"
+    networks:
+      - backend # Réseau partagé défini globalement
+
+networks:
+  backend:
+    external: true # Assure-toi que le réseau "backend" est défini dans le central

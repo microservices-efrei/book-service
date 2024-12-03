@@ -4,6 +4,7 @@ const { sendJwtToken } = require('../middleware/jwt');
 
 const RABBITMQ_URI = 'amqp://micro-service:password@rabbitmq'; // URI de RabbitMQ
 const BORROWING_QUEUE = 'borrowing_queue'; // Queue pour envoyer les demandes de réservation
+const RETURNING_QUEUE = 'returning_queue'; // Queue pour envoyer les demandes de retour
 
 // Fonction pour envoyer un message à RabbitMQ
 async function sendMessageToQueue(queue, message) {
@@ -172,10 +173,59 @@ const borrowBook = async (req, res) => {
     await sendMessageToQueue(BORROWING_QUEUE, borrowRequest);
 
     res.status(200).json({
-      message: `Demande de réservation pour le livre '${book.title}' envoyée avec succès.`,
+      message: `Retour du livre '${book.title}' envoyée avec succès.`,
     });
   } catch (error) {
-    console.error('Erreur lors de la réservation du livre:', error);
+    console.error('Erreur lors du retour du livre:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+  }
+};
+
+const returnBook = async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const userId = req.user.id; // L'ID de l'utilisateur est extrait du token JWT
+
+    // Validation des données
+    if (!userId || !bookId) {
+      return res
+        .status(400)
+        .json({ message: "L'ID de l'utilisateur et du livre sont requis." });
+    }
+
+    // Vérification que le livre existe
+    const book = await Book.findByPk(bookId);
+    if (!book) {
+      return res.status(404).json({ message: 'Livre non trouvé.' });
+    }
+
+    const isAvailable = book.isAvailable;
+    if (isAvailable) {
+      return res.status(400).json({ message: 'Le livre est déjà disponible.' });
+    }
+
+    const updateBook = await book.update({ isAvailable: true });
+
+    const borrowRequest = {
+      userId,
+      bookId,
+      returnedAt: new Date(),
+    };
+
+    // Envoyer la demande de retour à la queue RabbitMQ
+    await sendMessageToQueue(RETURNING_QUEUE, borrowRequest);
+
+    if (!updateBook) {
+      return res
+        .status(500)
+        .json({ message: 'Erreur lors du retour du livre.' });
+    }
+
+    res.status(200).json({
+      message: `Le livre '${book.title}' a été retourné avec succès.`,
+    });
+  } catch (error) {
+    console.error('Erreur lors du retour du livre:', error);
     res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
 };
@@ -187,4 +237,5 @@ module.exports = {
   getBook,
   borrowBook,
   deleteBook,
+  returnBook,
 };

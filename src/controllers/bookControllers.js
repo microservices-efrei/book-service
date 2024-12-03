@@ -166,6 +166,7 @@ const borrowBook = async (req, res) => {
     const borrowRequest = {
       userId,
       bookId,
+      isAvailable: false,
       token: sendJwtToken(res, req.user),
     };
 
@@ -173,7 +174,7 @@ const borrowBook = async (req, res) => {
     await sendMessageToQueue(BORROWING_QUEUE, borrowRequest);
 
     res.status(200).json({
-      message: `Retour du livre '${book.title}' envoyée avec succès.`,
+      message: `Réservation du livre '${book.title}' envoyée avec succès.`,
     });
   } catch (error) {
     console.error('Erreur lors du retour du livre:', error);
@@ -209,6 +210,7 @@ const returnBook = async (req, res) => {
     const borrowRequest = {
       userId,
       bookId,
+      isAvailable: true,
       returnedAt: new Date(),
     };
 

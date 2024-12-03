@@ -10,12 +10,12 @@ services:
     ports:
       - '3003:3003'
     environment:
-      - NODE_ENV=development
-      - DB_HOST=database-postgres # Nom du service PostgreSQL dans le compose central
-      - DB_USER=root
-      - DB_PASSWORD=password
-      - DB_NAME=book_db
-      - JWT_SECRET="syDqft24Tcc35Y1gepDphX69HwdJicfYQzVzvE3Oi2aYicLDmQE5XGvIqTD57Pac"
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST} # Nom du service PostgreSQL dans le compose central
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./src:/usr/src/app/src
     command: >

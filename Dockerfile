@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Exposer le port sur lequel l'app écoute
-EXPOSE 3001
+EXPOSE 3003
 
 # Démarrer l'application
 

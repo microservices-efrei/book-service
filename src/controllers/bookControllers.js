@@ -31,11 +31,9 @@ const createBook = async (req, res) => {
     const user = req.user; // L'utilisateur est extrait du token JWT
 
     if (user.role !== 'admin') {
-      return res
-        .status(403)
-        .json({
-          message: "Vous n'êtes pas autorisé à effectuer cette action.",
-        });
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à effectuer cette action.",
+      });
     }
 
     // Validation des données
@@ -98,6 +96,14 @@ const updateBook = async (req, res) => {
   try {
     const { title, author, description } = req.body;
     const { id } = req.params;
+    const user = req.user; // L'utilisateur est extrait du token JWT
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à effectuer cette action.",
+      });
+    }
+
     const book = await Book.findByPk(id);
     if (!book) {
       return res.status(404).json({ message: 'Livre non trouvé.' });
@@ -123,6 +129,14 @@ const updateBook = async (req, res) => {
 const deleteBook = async (req, res) => {
   try {
     const { id } = req.params;
+    const user = req.user; // L'utilisateur est extrait du token JWT
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Vous n'êtes pas autorisé à effectuer cette action.",
+      });
+    }
+
     const book = await Book.findByPk(id);
     if (!book) {
       return res.status(404).json({ message: 'Livre non trouvé.' });

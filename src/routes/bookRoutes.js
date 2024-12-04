@@ -15,7 +15,7 @@ router.get('/:id', verifyToken, getBook);
 router.post('/', verifyToken, createBook);
 router.put('/:id', verifyToken, updateBook);
 router.delete('/:id', verifyToken, deleteBook);
-router.get('/', verifyToken, getBooks);
+router.get('/', getBooks);
 router.post('/borrow/:bookId', verifyToken, borrowBook);
 router.put('/return/:bookId', verifyToken, returnBook);
 

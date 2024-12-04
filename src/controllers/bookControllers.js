@@ -30,6 +30,14 @@ const createBook = async (req, res) => {
     const { title, author, description } = req.body;
     const user = req.user; // L'utilisateur est extrait du token JWT
 
+    if (user.role !== 'admin') {
+      return res
+        .status(403)
+        .json({
+          message: "Vous n'êtes pas autorisé à effectuer cette action.",
+        });
+    }
+
     // Validation des données
     if (!title || !author) {
       return res

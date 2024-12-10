@@ -4,7 +4,6 @@ const { sendJwtToken } = require('../middleware/jwt');
 
 const RABBITMQ_URI = 'amqp://micro-service:password@rabbitmq'; // URI de RabbitMQ
 const BORROWING_QUEUE = 'borrowing_queue'; // Queue pour envoyer les demandes de réservation
-const RETURNING_QUEUE = 'returning_queue'; // Queue pour envoyer les demandes de retour
 
 // Fonction pour envoyer un message à RabbitMQ
 async function sendMessageToQueue(queue, message) {

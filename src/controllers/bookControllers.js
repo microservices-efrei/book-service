@@ -27,7 +27,7 @@ async function sendMessageToQueue(queue, message) {
 // Route pour ajouter un livre
 const createBook = async (req, res) => {
   try {
-    const { title, author, description } = req.body;
+    const { title, author, description, genre } = req.body;
     const user = req.user; // L'utilisateur est extrait du token JWT
 
     if (user.role !== 'admin') {
@@ -44,7 +44,7 @@ const createBook = async (req, res) => {
     }
 
     // Création du livre
-    const book = await Book.create({ title, author, description });
+    const book = await Book.create({ title, author, description, genre });
     if (!book) {
       return res
         .status(500)
@@ -57,6 +57,7 @@ const createBook = async (req, res) => {
         id: book.id,
         title: book.title,
         author: book.author,
+        genre: book.genre,
         description: book.description,
         isAvailable: book.isAvailable,
       },

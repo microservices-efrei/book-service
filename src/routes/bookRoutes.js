@@ -7,7 +7,6 @@ const {
   getBook,
   createBook,
   deleteBook,
-  returnBook,
 } = require('../controllers/bookControllers');
 const { verifyToken } = require('../middleware/jwt');
 
@@ -17,6 +16,5 @@ router.put('/:id', verifyToken, updateBook);
 router.delete('/:id', verifyToken, deleteBook);
 router.get('/', getBooks);
 router.post('/borrow/:bookId', verifyToken, borrowBook);
-router.put('/return/:bookId', verifyToken, returnBook);
 
 module.exports = router;

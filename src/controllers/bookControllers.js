@@ -205,53 +205,30 @@ const borrowBook = async (req, res) => {
   }
 };
 
-const returnBook = async (req, res) => {
+const setAvailableBook = async (bookId) => {
+  const user = req.user;
+
   try {
-    const { bookId } = req.params;
-    const userId = req.user.id; // L'ID de l'utilisateur est extrait du token JWT
-
-    // Validation des données
-    if (!userId || !bookId) {
-      return res
-        .status(400)
-        .json({ message: "L'ID de l'utilisateur et du livre sont requis." });
+    if (!user) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié.' });
     }
 
-    // Vérification que le livre existe
-    const book = await Book.findByPk(bookId);
-    if (!book) {
-      return res.status(404).json({ message: 'Livre non trouvé.' });
-    }
-
-    const isAvailable = book.isAvailable;
-    if (isAvailable) {
-      return res.status(400).json({ message: 'Le livre est déjà disponible.' });
-    }
-
-    const updateBook = await book.update({ isAvailable: true });
-
-    const borrowRequest = {
-      userId,
-      bookId,
-      isAvailable: true,
-      returnedAt: new Date(),
-    };
-
-    // Envoyer la demande de retour à la queue RabbitMQ
-    await sendMessageToQueue(RETURNING_QUEUE, borrowRequest);
-
-    if (!updateBook) {
-      return res
-        .status(500)
-        .json({ message: 'Erreur lors du retour du livre.' });
-    }
-
-    res.status(200).json({
-      message: `Le livre '${book.title}' a été retourné avec succès.`,
+    const book = await Book.findOne({
+      where: { id: bookId },
     });
+
+    if (!borrowing) {
+      return res.status(404).json({ message: 'Emprunt non trouvé.' });
+    }
+
+    book.isAvailable = true;
+
+    await book.save();
+
+    console.log('Livre disponible:', book);
   } catch (error) {
-    console.error('Erreur lors du retour du livre:', error);
-    res.status(500).json({ message: 'Erreur serveur', error: error.message });
+    console.error("Erreur lors de la mise à jour de l'emprunt:", error.message);
+    return null;
   }
 };
 
@@ -262,5 +239,5 @@ module.exports = {
   getBook,
   borrowBook,
   deleteBook,
-  returnBook,
+  setAvailableBook,
 };

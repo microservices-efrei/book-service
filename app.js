@@ -2,7 +2,7 @@ const express = require('express');
 const sequelize = require('./src/config/database');
 const dotenv = require('dotenv');
 const indexRoutes = require('./src/routes/index');
-const rabbitMQService = require('./src/services/rabbitmqService');
+const { startListening } = require('./src/services/listeningService');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./src/config/swagger');
 const cors = require('cors');
@@ -31,7 +31,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api', indexRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-rabbitMQService.startListening();
+
+startListening();
 app.listen(PORT, () => {
   console.log(`User Service running on port ${PORT}`);
 });
